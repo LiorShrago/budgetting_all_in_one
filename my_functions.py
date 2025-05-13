@@ -132,8 +132,8 @@ def show_main_window(categories, sorted_purchases, most_used, sub_sums, sub_coun
     headers = [
         ("Category", 20),
         ("Net Sum", 16),
-        ("Most Common Keyword", 25),
-        ("Sum for Most Common Keyword", 28),
+        # ("Most Common Keyword", 25),
+        # ("Sum for Most Common Keyword", 28),
         ("", 2)
     ]
     for col, (text, width) in enumerate(headers):
@@ -152,8 +152,8 @@ def show_main_window(categories, sorted_purchases, most_used, sub_sums, sub_coun
         # Main row
         tk.Label(table, text=cat, bg='white', anchor='w', font=("Segoe UI", 11), width=20).grid(row=2*i-1, column=0, sticky='w')
         tk.Label(table, text=f"${net_sum:,.2f}", bg='white', anchor='w', font=("Segoe UI", 11), width=16).grid(row=2*i-1, column=1, sticky='w')
-        tk.Label(table, text=most_common_keyword, bg='white', anchor='w', font=("Segoe UI", 11), width=25).grid(row=2*i-1, column=2, sticky='w')
-        tk.Label(table, text=f"${most_common_sum:,.2f}", bg='white', anchor='w', font=("Segoe UI", 11), width=28).grid(row=2*i-1, column=3, sticky='w')
+        # tk.Label(table, text=most_common_keyword, bg='white', anchor='w', font=("Segoe UI", 11), width=25).grid(row=2*i-1, column=2, sticky='w')
+        # tk.Label(table, text=f"${most_common_sum:,.2f}", bg='white', anchor='w', font=("Segoe UI", 11), width=28).grid(row=2*i-1, column=3, sticky='w')
 
         # Styled Details button
         btn = tk.Button(table, text="Details", width=10,
@@ -169,10 +169,10 @@ def show_main_window(categories, sorted_purchases, most_used, sub_sums, sub_coun
         tk.Label(table, text="", bg='white', width=20).grid(row=2*i, column=0)
         tk.Label(table, text=f"{pct_of_total:.2f}% of Total", font=("Segoe UI", 10), fg="#888", bg='white', anchor='w', width=16).grid(row=2*i, column=1, sticky='w')
         tk.Label(table, text="", bg='white', width=25).grid(row=2*i, column=2)
-        tk.Label(table,
-                 text=f"{pct_of_cat:.2f}% of Cat., {pct_of_total_kw:.2f}% of Total",
-                 font=("Segoe UI", 10), fg="#888", bg='white', anchor='w', width=28).grid(row=2*i, column=3, sticky='w')
-        tk.Label(table, text="", bg='white', width=2).grid(row=2*i, column=4)
+        # tk.Label(table,
+        #          text=f"{pct_of_cat:.2f}% of Cat., {pct_of_total_kw:.2f}% of Total",
+        #          font=("Segoe UI", 10), fg="#888", bg='white', anchor='w', width=28).grid(row=2*i, column=3, sticky='w')
+        # tk.Label(table, text="", bg='white', width=2).grid(row=2*i, column=4)
 
     # --- Footer with grand totals and date range ---
     if parsed_purchases:
@@ -221,8 +221,19 @@ def build_summary_string(categories, sorted_purchases, parsed_purchases, grand_t
     summary_lines.append(f"\n==> Grand Total Spent: ${grand_total:<10.2f} Total Returns: ${returns:<10.2f} Total Credit Payment: ${total_credit_pay:<10.2f}\n")
     return "\n".join(summary_lines)
 
-def parse_csv(filename, type_of_satement):
-    purchases = []
+def parse_multiple_csv(files_with_types):
+    """
+    files_with_types: list of tuples (filename, type_of_statement)
+    Returns: combined list of all purchases from all files
+    """
+    all_transactions = []
+    for filename, type_of_statement in files_with_types:
+        purchases = parse_csv(filename, type_of_statement)
+        all_transactions.extend(purchases)
+    return all_transactions
+
+def parse_csv(filename, type_of_statement):
+    purchases,transactions = [],[]
     with open(filename, 'r', newline='') as file:
         sample = file.read(2048)  # Read a sample of the file (2 KB is usually enough)
         file.seek(0)  # Go back to the start of the file after reading the sample
@@ -233,21 +244,55 @@ def parse_csv(filename, type_of_satement):
             next(file)  # Skip the header line
         else:
             print("No header detected in the first row.")
-
         reader = csv.reader(file)
         for i, row in enumerate(reader):
             if len(row) >= 4:
-                if (type_of_satement == 'mastercard'):
+                if (type_of_statement == 'cibc'):
                     date = row[0]
+                    year, month, day = map(int,date.split('-'))
+                    date_obj = datetime(year,month,day)
+                    date = date_obj.strftime("%Y-%m-%d")
                     description = row[1]
                     try:
                         debit = float(row[2]) if row[2] else -float(row[3])
                     except ValueError:
                         print(f"Skipping invalid numeric value at row {i}: {row}")
                         continue
-                    purchases.append({'date': date, 'description': description, 'debit': debit})
+                    purchases.append({'date': date, 'description': description, 'debit': debit, 'type': type_of_statement})
+                elif (type_of_statement == 'simplii'):
+                    date = row[0]
+                    month, day, year = map(int,date.split('/'))
+                    date_obj = datetime(year,month,day)
+                    date = date_obj.strftime("%Y-%m-%d")
+                    description = row[1]
+                    try:
+                        debit = float(row[2]) if row[2] else -float(row[3])
+                    except ValueError:
+                        print(f"Skipping invalid numeric value at row {i}: {row}")
+                        continue
+                    purchases.append({'date': date, 'description': description, 'debit': debit, 'type': type_of_statement})
+                elif (type_of_statement == 'amex'):
+                    date = row[0]
+                    date = date.replace(".", "")
+                    date_obj = datetime.strptime(str(date), "%d %b %Y")
+                    date = date_obj.strftime("%Y-%m-%d")
+                    description = row[1]
+                    try:
+                        debit = row[3] if row[3] else row[2]
+                        debit = debit.replace("$","")
+                        debit = debit.replace(",", "")
+                        if '-' in debit: #the amount is negative
+                            debit = debit.replace("-","")
+                            debit = -float(debit)
+                        else:
+                            debit = float(debit)
+                    except ValueError:
+                        print(f"Skipping invalid numeric value at row {i}: {row}")
+                        continue
+                    purchases.append({'date': date, 'description': description, 'debit': debit, 'type': type_of_statement})
             else:
                 print("Skipping invalid row at index", i, ":", row)
+        print(purchases)
     return purchases
 
 def categorize_purchases(purchases, categories):
@@ -388,3 +433,4 @@ def analyze_category_keywords(sorted_purchases, categories):
         sub_category_counts[category] = filtered_counts
 
     return most_used_keywords, sub_category_sums, sub_category_counts
+

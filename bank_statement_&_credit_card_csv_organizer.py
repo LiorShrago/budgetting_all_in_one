@@ -32,8 +32,11 @@ categories= {'grocery':['COSTCO','DOLLAR','NOFRILLS','FOOD BASICS', 'WAL-MART', 
 # if mac:
 
 #filename= 'C:\Documents\Python310\Scripts\bank_statement_&_credit_card_csv_parser'
-filename_0 = "account_or_credit_statements\cibc_costco_mastercard_04_2024_to_05_2025.csv"
-filename_1 = 'account_or_credit_statements\simplii_checking_may_2024_to_may_2025.csv'
+costco_mastercard_csv = r"account_or_credit_statements\cibc_costco_mastercard_04_2024_to_05_2025.csv"
+simplii_checking_account = r'account_or_credit_statements\simplii_checking_may_2024_to_may_2025.csv'
+amex_cobalt = r"account_or_credit_statements\amex_cobalt_till_05_10_2025.csv"
+td_visa_aeroplan = r"account_or_credit_statements\td_visa_dec_2024_to_jan_2025.csv"
+eq_bank_account = r"account_or_credit_statements\eq_bank_account_april_2025_to_may_10_2025.csv"
 
 #filename= 'C:\Documents\Python310\Scripts\bank_statement_csv_parser\cibc_costco_mastercard_04_2018_to_05_2025.csv'
 
@@ -41,18 +44,29 @@ filename_1 = 'account_or_credit_statements\simplii_checking_may_2024_to_may_2025
 
 ##################################### MAIN ################################################################
 
+files_with_types = [
+    (costco_mastercard_csv, 'cibc'),
+    (simplii_checking_account, 'simplii'),
+    (amex_cobalt, 'amex'),
+    (td_visa_aeroplan, "td"),
+    (eq_bank_account,'eq')
+
+    # Add as many as you want
+]
+parsed_purchases = my_functions.parse_multiple_csv(files_with_types)
+
 #parse the CSV file purchases
-parsed_purchases = my_functions.parse_csv(filename_0,'mastercard')
+#parsed_purchases = my_functions.parse_csv(costco_mastercard_csv,'cibc')
 
 # Categorize the purchases
 sorted_purchases = my_functions.categorize_purchases(parsed_purchases, categories)
 print("\n",len(sorted_purchases['uncategorized']), "Out of", len(parsed_purchases), "Uncatageroized purchases", "\n")
 
 #let user choose and create own categories
-final_purchases, final_categories = my_functions.review_uncategorized_purchases(
-    sorted_purchases, parsed_purchases, categories
-)
-print(f"New sorted purchases are ${final_purchases} and the New Categories are: ${final_categories}")
+# final_purchases, final_categories = my_functions.review_uncategorized_purchases(
+#     sorted_purchases, parsed_purchases, categories
+# )
+# print(f"New sorted purchases are ${final_purchases} and the New Categories are: ${final_categories}")
 
 
 #Print the sum of the purchases in each category
@@ -75,12 +89,12 @@ print(f"\n==> Grand Total Spent: ${grand_total:<10.2f} Total Returns: ${returns:
 result_string += "\n==> Grand Total Spent: ${:<10.2f}".format(grand_total) + "Total Returns: ${:^20.2f}".format(returns) + " Total Credit Payment: ${:^20.2f}".format(total_credit_pay) + "\n"
 
 most_used, sub_sums, sub_counts = my_functions.analyze_category_keywords(sorted_purchases, categories)
-for cat in categories:
-    print(f"\nCategory: {cat}")
-    print(f"  Most-used keyword: {most_used[cat][0]} ({most_used[cat][1]} times)")
-    print("  Keyword breakdown:")
-    for kw in sub_counts[cat]:
-        print(f"    {kw:<15} - Count: {sub_counts[cat][kw]:<3}  Sum: ${sub_sums[cat][kw]:.2f}")
+# for cat in categories:
+#     print(f"\nCategory: {cat}")
+#     print(f"  Most-used keyword: {most_used[cat][0]} ({most_used[cat][1]} times)")
+#     print("  Keyword breakdown:")
+#     for kw in sub_counts[cat]:
+#         print(f"    {kw:<15} - Count: {sub_counts[cat][kw]:<3}  Sum: ${sub_sums[cat][kw]:.2f}")
 
 
 # Build your summary string as you would print it
