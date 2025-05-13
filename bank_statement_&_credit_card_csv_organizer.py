@@ -9,23 +9,38 @@ rows,row, columns,col = [],[],[],[]
 parsed_purchases, sorted_purchases = [], []
 i,c,j=0,0,0
 result_string = ""
-categories= {'grocery':['COSTCO','DOLLAR','NOFRILLS','FOOD BASICS', 'WAL-MART', 'SUPERSTORE', 'LONGOS','LOBLAWS','METRO','FRESHCO','FOODLAND','GROCERY','GOODMAN','T&T','RANCHFRESH'] 
-             ,'restaurant':['CHATIME','WHAT A BAGEL','DELIVERO','KIBO' ,'CHICKEN','BAR AND GRIL','PATTIES','MARIACHI', 'A&W', 'SEAFOOD','COBS','SALT','LOBSTER','ISAAN DER' , 'GOLS','SHAWARMA', 'KIMPTON','HUNGRY' , 'TIM HORTON','MCDONALD','TACO', 'KFC' ,'GELATO','EATS','PIZZA','BURGER','WINGS','RESTAURANT','CAFE','COFFEE','DINNER','LUNCH','BREAKFAST','BAGEL','SANDWICH','SUSHI','TACOS','BUBBLE TEA','BOBA','TEA','BUBBLE','FOOD TRUCK','FOOD COURT','FOOD HALL','FAST FOOD'] 
-             ,'gas':['SHELL','PETRO CANADA','ESSO','ULTRAMAR','PIONEER','GAS','FUEL','PETRO']
-             ,'shopping':['FADES', 'BARBERSHOP','AMAZON','VALUE VILLAGE','ALIEXPRESS','TEMU','INDIGO', 'THRIFT','CHAPTERS' ,'EBAY','WALMART','BEST BUY','MARSHALLS','HOME DEPOT','LOWES','CANADIAN TIRE', 'STAPLES']
-             ,'entertainment':['BILLIARDS','CINEPLEX','MOVIE THEATRE','THEATRE','DAVE', 'ELECTRIC','FAMOUS PLAYER']
-             ,'travel':['MIAMI','RCL','COZUMEL','AIR CANADA','FLIGHT CENTRE','EXPEDIA','HALIFAX','PEGGYS COVE']
-             ,'health':['PHARM','DRUG STORE','DR','MASSAGE','DENTIST','OPTOMETRIST','OPTICIAN','DOCTOR','CLINIC','CVC','MEDICAL','HOSPITAL','HEALTH','WELLNESS']
-             ,'utilities':['BELL ','ROGERS','HYDRO ONE','TELMAX']
-             ,'weed and alcohol':['LCBO','BEER STORE','WINE','LIQUOR','WOODS','CANNABIS','NSLC','CANNAB','FIKA']
-             ,'transportation':['TTC','TRANSIT' ,'VIA RAIL','TAXI','UBER','LYFT', 'PRESTO', 'PARKING', 'GREENP']
-             ,'CREDIT PAYMENT':['PAYMENT THANK YOU']
-             ,'DON HOWARDS':['DON HOWARD']
-             ,'bank transfer':['TRANSFER IN']
-             ,'mortgage':['MORTGAGE']
-             ,'e-transfer':['E-TRANSFER']
-             ,'uncategorized':[]
-             }
+categories= {'grocery':            ['COSTCO','DOLLAR','NOFRILLS','FARM BOY','FOOD BASICS', 'WAL-MART', 'SUPERSTORE', 'LONGOS','LOBLAWS','METRO','FRESHCO','FOODLAND','GROCERY','GOODMAN','T&T',
+                                    'RANCHFRESH','VINCE'] 
+            ,'restaurant':         ['CHATIME','POKE BOX' ,'NOODLE LEGEND', 'POS MERCHANDISE','SOUPS', 'ONROUTE','MABU' , 'CARIBB', 'AMD THORNHILL', 'MOXIES','MEVAME', 'WHAT A BAGEL','DELIVERO',
+                                    'PATTIES', 'MARIACHI','BREWING', 'A&W', 'SEAFOOD','COBS','SALT','LOBSTER','ISAAN DER' , 'GOLS','SHAWARMA', 'KIMPTON','HUNGRY' , 'TIM HORTON','MCDONALD',
+                                    'TACO','KFC','GELATO','EATS','PIZZA','BURGER','WINGS','RESTAURANT','CAFE','COFFEE','DINNER','LUNCH','BREAKFAST','BAGEL','SANDWICH','SUSHI','TACOS',
+                                    'BUBBLE TEA','BOBA','TEA','FOOD TRUCK','FOOD COURT','FOOD HALL','FAST FOOD', 'GYUBEE', 'JAPANE', 'DUMPLING','KING SLICE','COCOA40','SUNSHINE VILLAGE GRILL',
+                                    'SHENGJIAN KING',"SHELBY'S",'KIBO' ,'CHICKEN','BAR AND GRIL','EARLS'] 
+            ,'gas':                ['SHELL','PETRO CANADA','ESSO','ULTRAMAR','PIONEER','GAS','FUEL','PETRO']
+            ,'shopping':           ['FADES','BBYMARKETPLACE', 'STOKES','MACS', 'STORE ', 'VARIET','NUT SHOPP', 'SEPHORA','SHOPPER','AMZN','VALUE VILLAGE','TEMU','INDIGO','THRIFT','MARKET BRIGHTON',
+                                    'CHAPTERS' ,'EBAY','STINSON & SON','WALMART','BEST BUY','MARSHALLS','HOME DEPOT','LOWES','CANADIAN TIRE', 'STAPLES','TREASURE HUNT','PARTY CITY','ALIEXPRESS',
+                                    'BARBERSHOP',]
+            ,'entertainment':      ['BILLIARDS','NEWROADS PERFORMING','AXE THROWING', 'FISH AND WILDLI', 'BAIT', 'PPARK', 'CLUB' , 'USD','CINEPLEX','MOVIE THEATRE','THEATRE','DAVE', 'ELECTRIC',
+                                    'FAMOUS PLAYER','MIRVISH']
+            ,'travel':             ['MIAMI','AIRCANADA','RCL','COZUMEL','AIR CANADA','MIND PEOPLE', 'FLIGHT CENTRE','EXPEDIA','HALIFAX','PEGGYS COVE']
+            ,'health':             ['PHARM','DRUG STORE','LA FITNESS','DR','MASSAGE','DENTIST','OPTOMETRIST','OPTICIAN','CLINIC','CVC','MEDICAL','HOSPITAL','HEALTH','WELLNESS',
+                                    'MEMBERSHIP FEE INSTALLMENT','WATER DEPOT']
+            ,'utilities':          ['BELL ','ROGERS','HYDRO ONE','TELMAX']
+            ,'weed and alcohol':   ['LCBO','BEER STORE','WINE','LIQUOR','WOODS','NSLC','CANNAB','FIKA']
+            ,'transportation':     ['TTC','TRANSIT' ,'VIA RAIL','TAXI','UBER','LYFT', 'PRESTO', 'PARKING', 'GREENP']
+            ,'CREDIT CARD PAYMENT':['PAYMENT THANK YOU','PAYMENT RECEIVED','CREDIT ADJUSTMENT', 'BILL PAYMENT VISA', 'BILL PAYMENT MASTERCARD','PAYMENTS American Express','Payment to  CIBC MASTERCARD']
+            ,'GOVERNMENT':         ['EFT CREDIT','Town of Newma','NEWMARKET TAX', "CARBON REBATE"]
+            ,'HELEN':              ['PETSMART','PETVALU','PET SERVICES']
+            ,'GAMBLING':           ['BET365','FANDUEL', 'BETMGM','OLG']
+            ,'DON HOWARDS':        ['DON HOWARD']
+            ,'mortgage':           ['MORTGAGE']
+            ,'e-transfer':         ['INTERAC E-TRANSFER SEND LISA AMENT','INTERAC E-TRANSFER RECEIVE','INTERAC E-TRANSFER SEND' ]
+            ,'stocks':             ['QUESTRADE']
+            ,'salary':             ['AYROLL DEPOSIT AMD','Direct deposit from AMD']
+            ,'charity':            ['PLAN CANADA']
+            ,'TRANSFERS IN/OUT':   ['TRANSFER IN', 'TRANSFER OUT', 'CHEQUE IMAGE DEPOSIT', 'INTEREST','ABM DEPOSIT','Card Load','Transfer from  Simplii','Referral Bonus','Account Credited']
+            ,'uncategorized':      []
+            }
 
 # if windows:
 # with open('C:\Documents\Python310\Scripts\bank_statement_csv_parser\cibc_costco_mastercard_04_2018_to_05_2025.csv' , mode='r') as file:
@@ -61,7 +76,7 @@ parsed_purchases = my_functions.parse_multiple_csv(files_with_types)
 # Categorize the purchases
 sorted_purchases = my_functions.categorize_purchases(parsed_purchases, categories)
 print("\n",len(sorted_purchases['uncategorized']), "Out of", len(parsed_purchases), "Uncatageroized purchases", "\n")
-
+print(f"uncategorized purchases are: \n {sorted_purchases['uncategorized']}")
 #let user choose and create own categories
 # final_purchases, final_categories = my_functions.review_uncategorized_purchases(
 #     sorted_purchases, parsed_purchases, categories
@@ -74,19 +89,18 @@ total_spent, grand_total, credit_payment, total_credit_pay, returns= 0,0,0,0,0
 for category, purchases in sorted_purchases.items():
     for purchase in purchases:
         if purchase['debit'] < 0:  # Check if the purchase is a debit (negative value) 
-            credit_payment += purchase['debit']  # Add to credit payment
-            if category != 'CREDIT PAYMENT':
+            if category != 'CREDIT CARD PAYMENT' or  category != 'E-TRANSFER':
                 returns+= purchase['debit']  # Add to returns
         else:
             total_spent += purchase['debit']
     grand_total += total_spent  # Add to grand total
-    total_credit_pay += credit_payment  # Add to total credit payment
+    total_credit_pay += credit_payment  # Add to total CREDIT CARD PAYMENT
     #print(f"{category:>25} - Total Spent: ${total_spent:<10.2f} Credit: ${credit_payment:<10.2f}") 
     result_string += "{:<25}".format(category) + " - Total Spent:   $" + "{:<15.2f}".format(total_spent) + "  Credit:   $" + "{:<15.2f}".format(credit_payment) + "\n"
     total_spent = 0  # Reset total_spent for the next category
     credit_payment = 0  # Reset credit_payment for the next category
-print(f"\n==> Grand Total Spent: ${grand_total:<10.2f} Total Returns: ${returns:<10.2f} Total Credit Payment: ${total_credit_pay:<10.2f}\n")
-result_string += "\n==> Grand Total Spent: ${:<10.2f}".format(grand_total) + "Total Returns: ${:^20.2f}".format(returns) + " Total Credit Payment: ${:^20.2f}".format(total_credit_pay) + "\n"
+print(f"\n==> Grand Total Spent: ${grand_total:<10.2f} Total Returns: ${returns:<10.2f} Total CREDIT CARD PAYMENT: ${total_credit_pay:<10.2f}\n")
+result_string += "\n==> Grand Total Spent: ${:<10.2f}".format(grand_total) + "Total Returns: ${:^20.2f}".format(returns) + " Total CREDIT CARD PAYMENT: ${:^20.2f}".format(total_credit_pay) + "\n"
 
 most_used, sub_sums, sub_counts = my_functions.analyze_category_keywords(sorted_purchases, categories)
 # for cat in categories:
@@ -100,7 +114,7 @@ most_used, sub_sums, sub_counts = my_functions.analyze_category_keywords(sorted_
 # Build your summary string as you would print it
 summary_text = ""
 #summary_text += f"{len(sorted_purchases['uncategorized'])} out of {len(parsed_purchases)} Uncatageroized purchases\n"
-#summary_text += f"\n==> Grand Total Spent: ${grand_total:<10.2f} Total Returns: ${returns:^20.2f} Total Credit Payment: ${total_credit_pay:^20.2f}\n"
+#summary_text += f"\n==> Grand Total Spent: ${grand_total:<10.2f} Total Returns: ${returns:^20.2f} Total CREDIT CARD PAYMENT: ${total_credit_pay:^20.2f}\n"
 
 # Now call the main window function
 

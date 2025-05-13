@@ -290,9 +290,28 @@ def parse_csv(filename, type_of_statement):
                         print(f"Skipping invalid numeric value at row {i}: {row}")
                         continue
                     purchases.append({'date': date, 'description': description, 'debit': debit, 'type': type_of_statement})
+                elif (type_of_statement == 'eq'):
+                    date = row[0]
+                    date_obj = datetime.strptime(str(date), "%d-%b-%y")
+                    date = date_obj.strftime("%Y-%m-%d")
+                    description = row[1]
+                    try:
+                        debit = row[2]
+                        debit = debit.replace("$","")
+                        debit = debit.replace(",", "")
+                        if '(' in debit: #the amount is negative, it is in brackets ()
+                            debit = debit.replace("(","")
+                            debit = debit.replace(")","")
+                            debit = -float(debit)
+                        else:
+                            debit = float(debit)
+                    except ValueError:
+                        print(f"Skipping invalid numeric value at row {i}: {row}")
+                        continue
+                    purchases.append({'date': date, 'description': description, 'debit': debit, 'type': type_of_statement})
             else:
                 print("Skipping invalid row at index", i, ":", row)
-        print(purchases)
+        #print(purchases)
     return purchases
 
 def categorize_purchases(purchases, categories):
