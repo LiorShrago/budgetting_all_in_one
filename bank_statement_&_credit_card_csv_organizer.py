@@ -88,11 +88,11 @@ print(f"uncategorized purchases are: \n {sorted_purchases['uncategorized']}")
 total_spent, grand_total, credit_payment, total_credit_pay, returns= 0,0,0,0,0
 for category, purchases in sorted_purchases.items():
     for purchase in purchases:
-        if purchase['debit'] < 0:  # Check if the purchase is a debit (negative value) 
+        if purchase.get('credit', 0):  # Check if the purchase is a credit 
             if category != 'CREDIT CARD PAYMENT' or  category != 'E-TRANSFER':
-                returns+= purchase['debit']  # Add to returns
+                returns+= float(purchase.get('credit', 0))  # Add to returns
         else:
-            total_spent += purchase['debit']
+            total_spent += float(purchase.get('debit', 0)) 
     grand_total += total_spent  # Add to grand total
     total_credit_pay += credit_payment  # Add to total CREDIT CARD PAYMENT
     #print(f"{category:>25} - Total Spent: ${total_spent:<10.2f} Credit: ${credit_payment:<10.2f}") 

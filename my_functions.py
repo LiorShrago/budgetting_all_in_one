@@ -7,7 +7,7 @@ from tkinter import scrolledtext,simpledialog, messagebox, ttk
 
 def show_category_details(category, sorted_purchases, sub_sums, sub_counts, grand_total):
     # Prepare data for the popup
-    net_sum = sum(p['debit'] for p in sorted_purchases[category])
+    net_debits = sum(p['debit'] for p in sorted_purchases[category])
     keywords = {}
     for kw in sub_counts[category]:
         keywords[kw] = {
@@ -30,8 +30,8 @@ def show_category_details(category, sorted_purchases, sub_sums, sub_counts, gran
     header.pack(anchor='w', pady=(0, 12))
 
     # Category total and percentage of grand total
-    pct_of_total = (net_sum / grand_total * 100) if grand_total else 0
-    summary = f"Total: ${net_sum:,.2f}   ({pct_of_total:.2f}% of Grand Total)\n"
+    pct_of_total = (net_debits / grand_total * 100) if grand_total else 0
+    summary = f"Total: ${net_debits:,.2f}   ({pct_of_total:.2f}% of Grand Total)\n"
     summary_label = tk.Label(frame, text=summary, font=("Segoe UI", 13, "bold"), bg='white', fg='#1565c0')
     summary_label.pack(anchor='w', pady=(0, 10))
 
@@ -44,7 +44,7 @@ def show_category_details(category, sorted_purchases, sub_sums, sub_counts, gran
     for kw, stats in sorted(keywords.items(), key=lambda x: -x[1]['sum']):
         kw_sum = stats['sum']
         kw_count = stats['count']
-        pct_cat = (kw_sum / net_sum * 100) if net_sum else 0
+        pct_cat = (kw_sum / net_debits * 100) if net_debits else 0
         pct_total = (kw_sum / grand_total * 100) if grand_total else 0
         table_rows += f"{kw:<22} ${kw_sum:>12,.2f} {kw_count:>7} {pct_cat:>12.2f}% {pct_total:>12.2f}%\n"
 
@@ -61,20 +61,19 @@ def show_category_details(category, sorted_purchases, sub_sums, sub_counts, gran
 
 def open_category_popup(category, sorted_purchases, sub_sums, sub_counts, grand_total):
     # Prepare details_dict for the popup
-    net_sum = sum(p['debit'] for p in sorted_purchases[category])
+    net_debits = sum(p['debit'] for p in sorted_purchases[category])
     keywords = {}
     for kw in sub_counts[category]:
         keywords[kw] = {
             'sum': sub_sums[category][kw],
             'count': sub_counts[category][kw]
         }
-    details_dict = {'net_sum': net_sum, 'keywords': keywords}
+    details_dict = {'net_debits': net_debits, 'keywords': keywords}
     show_category_details(category, details_dict, grand_total)
 
 
 def show_main_window(categories, sorted_purchases, most_used, sub_sums, sub_counts, summary_text,
                      grand_total, returns, total_credit_pay, parsed_purchases):
-
     root = tk.Tk()
     root.title("Spending Categories")
     root.geometry('1500x900')
@@ -131,7 +130,8 @@ def show_main_window(categories, sorted_purchases, most_used, sub_sums, sub_coun
     # Table headers
     headers = [
         ("Category", 20),
-        ("Net Sum", 16),
+        ("Net Debits", 16),
+        ("Net Credits", 16),
         # ("Most Common Keyword", 25),
         # ("Sum for Most Common Keyword", 28),
         ("", 2)
@@ -142,16 +142,19 @@ def show_main_window(categories, sorted_purchases, most_used, sub_sums, sub_coun
 
     # Table rows
     for i, cat in enumerate(categories, start=1):
-        net_sum = sum(purchase['debit'] for purchase in sorted_purchases[cat])
+        net_credits = sum(purchase.get('credit', 0) for purchase in sorted_purchases[cat])
+        net_debits = sum(purchase.get('debit', 0) for purchase in sorted_purchases[cat])
+        print(f'net credits are ${net_credits} and net debits are ${net_credits}')
         most_common_keyword = most_used[cat][0] if most_used[cat][0] else "N/A"
         most_common_sum = sub_sums[cat].get(most_common_keyword, 0.0)
-        pct_of_total = (net_sum / grand_total * 100) if grand_total else 0
-        pct_of_cat = (most_common_sum / net_sum * 100) if net_sum else 0
+        pct_of_total = (net_debits / grand_total * 100) if grand_total else 0
+        pct_of_cat = (most_common_sum / net_debits * 100) if net_debits else 0
         pct_of_total_kw = (most_common_sum / grand_total * 100) if grand_total else 0
 
         # Main row
         tk.Label(table, text=cat, bg='white', anchor='w', font=("Segoe UI", 11), width=20).grid(row=2*i-1, column=0, sticky='w')
-        tk.Label(table, text=f"${net_sum:,.2f}", bg='white', anchor='w', font=("Segoe UI", 11), width=16).grid(row=2*i-1, column=1, sticky='w')
+        tk.Label(table, text=f"${net_credits:,.2f}", bg='white', anchor='w', font=("Segoe UI", 11), width=16).grid(row=2*i-1, column=1, sticky='w')
+        tk.Label(table, text=f"${net_debits:,.2f}", bg='white', anchor='w', font=("Segoe UI", 11), width=16).grid(row=2*i-1, column=2, sticky='w')
         # tk.Label(table, text=most_common_keyword, bg='white', anchor='w', font=("Segoe UI", 11), width=25).grid(row=2*i-1, column=2, sticky='w')
         # tk.Label(table, text=f"${most_common_sum:,.2f}", bg='white', anchor='w', font=("Segoe UI", 11), width=28).grid(row=2*i-1, column=3, sticky='w')
 
@@ -189,9 +192,12 @@ def show_main_window(categories, sorted_purchases, most_used, sub_sums, sub_coun
 
     footer_text = (
         f"Start Date: {oldest_date}    End Date: {newest_date}\n\n"
-        f"Grand Total Spent: ${grand_total:,.2f}\n"
-        f"Total Returns: ${returns:,.2f}\n"
-        f"Total Credit Payment: ${total_credit_pay:,.2f}\n"
+        f"Total Purchases Payments: ${grand_total:,.2f}\n"
+        f"Total Credit Card Payments: ${returns:,.2f}\n"
+        f"Total Returns: ${total_credit_pay:,.2f}\n"
+        f"Total Cashflow In: ${total_credit_pay:,.2f}\n"
+        f"Total Cashflow Out: ${total_credit_pay:,.2f}\n"
+
     )
 
     footer_label = tk.Label(card, text=footer_text, font=("Segoe UI", 12, "bold"),
@@ -212,8 +218,8 @@ def build_summary_string(categories, sorted_purchases, parsed_purchases, grand_t
         total_spent = 0
         credit_payment = 0
         for purchase in sorted_purchases[category]:
-            if purchase['debit'] < 0:
-                credit_payment += purchase['debit']
+            if purchase.get('credit', 0):
+                credit_payment += purchase['credit']
             else:
                 total_spent += purchase['debit']
         summary_lines.append(f"{category:>25} - ${total_spent:<10.2f} ${credit_payment:<10.2f}")
@@ -254,11 +260,15 @@ def parse_csv(filename, type_of_statement):
                     date = date_obj.strftime("%Y-%m-%d")
                     description = row[1]
                     try:
-                        debit = float(row[2]) if row[2] else -float(row[3])
+                        if row[2]:
+                            debit = float(row[2])
+                            purchases.append({'date': date, 'description': description, 'debit': debit, 'type': type_of_statement})
+                        else:
+                            credit = float(row[3])
+                            purchases.append({'date': date, 'description': description, 'credit': credit, 'type': type_of_statement})
                     except ValueError:
                         print(f"Skipping invalid numeric value at row {i}: {row}")
                         continue
-                    purchases.append({'date': date, 'description': description, 'debit': debit, 'type': type_of_statement})
                 elif (type_of_statement == 'simplii'):
                     date = row[0]
                     month, day, year = map(int,date.split('/'))
@@ -266,11 +276,16 @@ def parse_csv(filename, type_of_statement):
                     date = date_obj.strftime("%Y-%m-%d")
                     description = row[1]
                     try:
-                        debit = float(row[2]) if row[2] else -float(row[3])
+                        if row[2]:
+                            debit = float(row[2]) 
+                            purchases.append({'date': date, 'description': description, 'debit': debit, 'type': type_of_statement})
+                        else:
+                            credit = float(row[3])
+                            purchases.append({'date': date, 'description': description, 'credit': credit, 'type': type_of_statement})
                     except ValueError:
                         print(f"Skipping invalid numeric value at row {i}: {row}")
                         continue
-                    purchases.append({'date': date, 'description': description, 'debit': debit, 'type': type_of_statement})
+                    
                 elif (type_of_statement == 'amex'):
                     date = row[0]
                     date = date.replace(".", "")
@@ -281,15 +296,17 @@ def parse_csv(filename, type_of_statement):
                         debit = row[3] if row[3] else row[2]
                         debit = debit.replace("$","")
                         debit = debit.replace(",", "")
-                        if '-' in debit: #the amount is negative
-                            debit = debit.replace("-","")
-                            debit = -float(debit)
+                        if '-' in debit: #the amount is a credit
+                            credit= debit.replace("-","")
+                            credit = float(credit)
+                            purchases.append({'date': date, 'description': description, 'credit': credit, 'type': type_of_statement})
                         else:
                             debit = float(debit)
+                            purchases.append({'date': date, 'description': description, 'debit': debit, 'type': type_of_statement})
                     except ValueError:
                         print(f"Skipping invalid numeric value at row {i}: {row}")
                         continue
-                    purchases.append({'date': date, 'description': description, 'debit': debit, 'type': type_of_statement})
+                    
                 elif (type_of_statement == 'eq'):
                     date = row[0]
                     date_obj = datetime.strptime(str(date), "%d-%b-%y")
@@ -299,16 +316,17 @@ def parse_csv(filename, type_of_statement):
                         debit = row[2]
                         debit = debit.replace("$","")
                         debit = debit.replace(",", "")
-                        if '(' in debit: #the amount is negative, it is in brackets ()
-                            debit = debit.replace("(","")
-                            debit = debit.replace(")","")
-                            debit = -float(debit)
+                        if '(' in debit: #the amount is in brackets () so it is a credit
+                            credit = debit.replace("(","")
+                            credit = credit.replace(")","")
+                            credit = float(credit)
+                            purchases.append({'date': date, 'description': description, 'credit': credit,'type': type_of_statement})
                         else:
                             debit = float(debit)
+                            purchases.append({'date': date, 'description': description, 'debit': debit,'type': type_of_statement})
                     except ValueError:
                         print(f"Skipping invalid numeric value at row {i}: {row}")
                         continue
-                    purchases.append({'date': date, 'description': description, 'debit': debit, 'type': type_of_statement})
             else:
                 print("Skipping invalid row at index", i, ":", row)
         #print(purchases)
@@ -435,7 +453,8 @@ def analyze_category_keywords(sorted_purchases, categories):
             for keyword in categories.get(category, []):
                 if keyword in desc:
                     keyword_counts[keyword] += 1
-                    keyword_sums[keyword] += purchase.get('debit', 0)
+
+                    keyword_sums[keyword] += float(purchase.get('debit', 0)) + float(purchase.get('credit', 0))
 
         # Remove keywords that were never matched (count is zero)
         filtered_counts = {kw: cnt for kw, cnt in keyword_counts.items() if cnt > 0}
