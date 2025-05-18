@@ -4,6 +4,7 @@
 # import tkinter as tk
 # from tkinter import scrolledtext,simpledialog, messagebox, ttk
 import my_functions
+import platform
 
 rows,row, columns,col = [],[],[],[]
 parsed_purchases, sorted_purchases = [], []
@@ -42,18 +43,25 @@ categories= {'grocery':            ['COSTCO','DOLLAR','NOFRILLS','FARM BOY','FOO
             ,'uncategorized':      []
             }
 
-# if windows:
-# with open('C:\Documents\Python310\Scripts\bank_statement_csv_parser\cibc_costco_mastercard_04_2018_to_05_2025.csv' , mode='r') as file:
-# if mac:
-
-#filename= 'C:\Documents\Python310\Scripts\bank_statement_&_credit_card_csv_parser'
-costco_mastercard_csv = r"account_or_credit_statements\cibc_costco_mastercard_04_2024_to_05_2025.csv"
-simplii_checking_account = r'account_or_credit_statements\simplii_checking_may_2024_to_may_2025.csv'
-amex_cobalt = r"account_or_credit_statements\amex_cobalt_till_05_10_2025.csv"
-td_visa_aeroplan = r"account_or_credit_statements\td_visa_dec_2024_to_jan_2025.csv"
-eq_bank_account = r"account_or_credit_statements\eq_bank_account_april_2025_to_may_10_2025.csv"
-
-#filename= 'C:\Documents\Python310\Scripts\bank_statement_csv_parser\cibc_costco_mastercard_04_2018_to_05_2025.csv'
+os_name = platform.system()
+if os_name == "Darwin":
+    #computer is ruinning "macOS"
+    costco_mastercard_csv = r"account_or_credit_statements/cibc_costco_mastercard_04_2024_to_05_2025.csv"
+    simplii_checking_account = r'account_or_credit_statements/simplii_checking_may_2024_to_may_2025.csv'
+    amex_cobalt = r"account_or_credit_statements/amex_cobalt_till_05_10_2025.csv"
+    td_visa_aeroplan = r"account_or_credit_statements/td_visa_dec_2024_to_jan_2025.csv"
+    eq_bank_account = r"account_or_credit_statements/eq_bank_account_april_2025_to_may_10_2025.csv"
+elif os_name == "Windows":
+    #computer is running "Windows"
+    costco_mastercard_csv = r"account_or_credit_statements\cibc_costco_mastercard_04_2024_to_05_2025.csv"
+    simplii_checking_account = r'account_or_credit_statements\simplii_checking_may_2024_to_may_2025.csv'
+    amex_cobalt = r"account_or_credit_statements\amex_cobalt_till_05_10_2025.csv"
+    td_visa_aeroplan = r"account_or_credit_statements\td_visa_dec_2024_to_jan_2025.csv"
+    eq_bank_account = r"account_or_credit_statements\eq_bank_account_april_2025_to_may_10_2025.csv"
+# elif os_name == "Linux":
+    #computer is running "Linux"
+# else:
+    # "Unknown OS"
 
 ############################## END VARIABLE DECLARATIONS END ##############################################################################
 
