@@ -22,9 +22,9 @@ categories= {'grocery':            ['COSTCO','DOLLAR','NOFRILLS','FARM BOY','FOO
                                     'BARBERSHOP',]
             ,'entertainment':      ['BILLIARDS','NEWROADS PERFORMING','AXE THROWING', 'FISH AND WILDLI', 'BAIT', 'PPARK', 'CLUB' , 'USD','CINEPLEX','MOVIE THEATRE','THEATRE','DAVE', 'ELECTRIC',
                                     'FAMOUS PLAYER','MIRVISH']
-            ,'travel':             ['MIAMI','AIRCANADA','RCL','COZUMEL','AIR CANADA','MIND PEOPLE', 'FLIGHT CENTRE','EXPEDIA','HALIFAX','PEGGYS COVE']
+            ,'travel':             ['MIAMI','AIRCANADA','RCL','COZUMEL','AIR CANADA', 'FLIGHT CENTRE','EXPEDIA','HALIFAX','PEGGYS COVE']
             ,'health':             ['PHARM','DRUG STORE','LA FITNESS','DR','MASSAGE','DENTIST','OPTOMETRIST','OPTICIAN','CLINIC','CVC','MEDICAL','HOSPITAL','HEALTH','WELLNESS',
-                                    'MEMBERSHIP FEE INSTALLMENT','WATER DEPOT']
+                                    'MEMBERSHIP FEE INSTALLMENT','WATER DEPOT','MIND PEOPLE']
             ,'utilities':          ['BELL ','ROGERS','HYDRO ONE','TELMAX']
             ,'weed and alcohol':   ['LCBO','BEER STORE','WINE','LIQUOR','WOODS','NSLC','CANNAB','FIKA']
             ,'transportation':     ['TTC','TRANSIT' ,'VIA RAIL','TAXI','UBER','LYFT', 'PRESTO', 'PARKING', 'GREENP']
@@ -102,7 +102,7 @@ for category, purchases in sorted_purchases.items():
 print(f"\n==> Grand Total Spent: ${grand_total:<10.2f} Total Returns: ${returns:<10.2f} Total CREDIT CARD PAYMENT: ${total_credit_pay:<10.2f}\n")
 result_string += "\n==> Grand Total Spent: ${:<10.2f}".format(grand_total) + "Total Returns: ${:^20.2f}".format(returns) + " Total CREDIT CARD PAYMENT: ${:^20.2f}".format(total_credit_pay) + "\n"
 
-most_used, sub_sums, sub_counts = my_functions.analyze_category_keywords(sorted_purchases, categories)
+most_used, sub_debit_sums, sub_credit_sums, sub_counts = my_functions.analyze_category_keywords(sorted_purchases, categories)
 # for cat in categories:
 #     print(f"\nCategory: {cat}")
 #     print(f"  Most-used keyword: {most_used[cat][0]} ({most_used[cat][1]} times)")
@@ -112,22 +112,22 @@ most_used, sub_sums, sub_counts = my_functions.analyze_category_keywords(sorted_
 
 
 # Build your summary string as you would print it
-summary_text = ""
+# summary_text = ""
 #summary_text += f"{len(sorted_purchases['uncategorized'])} out of {len(parsed_purchases)} Uncatageroized purchases\n"
 #summary_text += f"\n==> Grand Total Spent: ${grand_total:<10.2f} Total Returns: ${returns:^20.2f} Total CREDIT CARD PAYMENT: ${total_credit_pay:^20.2f}\n"
 
 # Now call the main window function
 
-summary_text = my_functions.build_summary_string(categories, sorted_purchases, parsed_purchases, grand_total, returns, total_credit_pay)
-summary_text = "" 
+# summary_text = my_functions.build_summary_string(categories, sorted_purchases, parsed_purchases, grand_total, returns, total_credit_pay)
+# summary_text = "" 
 
 my_functions.show_main_window(
     categories,
     sorted_purchases,
     most_used,
-    sub_sums,
+    sub_debit_sums,
+    sub_credit_sums,
     sub_counts,
-    summary_text,
     grand_total,
     returns,
     total_credit_pay,

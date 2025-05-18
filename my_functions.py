@@ -5,185 +5,174 @@ import tkinter as tk
 from tkinter import scrolledtext,simpledialog, messagebox, ttk
 
 
-def show_category_details(category, sorted_purchases, sub_sums, sub_counts, grand_total):
-    # Prepare data for the popup
-    net_debits = sum(p['debit'] for p in sorted_purchases[category])
+def show_category_details(category, sorted_purchases, sub_debit_sums, sub_credit_sums, sub_counts, grand_total):
+    # Prepare data remains the same
+    net_debits = sum(p.get('debit', 0) for p in sorted_purchases[category])
     keywords = {}
     for kw in sub_counts[category]:
         keywords[kw] = {
-            'sum': sub_sums[category][kw],
+            'sum_debits': sub_debit_sums[category][kw],
+            'sum_credits': sub_credit_sums[category][kw],
             'count': sub_counts[category][kw]
         }
 
     detail_win = tk.Toplevel()
     detail_win.title(f"Details for {category}")
-    detail_win.geometry('750x520')
     detail_win.configure(bg='#f4f6f8')
+    detail_win.minsize(1000, 520)  # Set minimum size
+    detail_win.resizable(True, True)  # Enable resizing
 
-    # Frame with border and padding to mimic a statement panel
-    frame = tk.Frame(detail_win, bg='white', bd=2, relief='groove', padx=18, pady=18)
-    frame.pack(expand=True, fill='both', padx=25, pady=25)
+    # Main container frame
+    main_frame = tk.Frame(detail_win, bg='white', bd=2, relief='groove')
+    main_frame.pack(expand=True, fill='both', padx=25, pady=25)
+
+    # Centered content using grid
+    main_frame.grid_columnconfigure(0, weight=1)
+    main_frame.grid_rowconfigure(2, weight=1)  # Allow table area to expand
 
     # Header label
-    header = tk.Label(frame, text=f"{category.title()} Statement",
-                      font=("Segoe UI", 18, "bold"), bg='white', fg='#1a237e')
-    header.pack(anchor='w', pady=(0, 12))
+    header = tk.Label(main_frame, text=f"{category.title()} Statement",
+                     font=("Segoe UI", 18, "bold"), bg='white', fg='#1a237e')
+    header.grid(row=0, column=0, pady=(0, 12), sticky='n')
 
-    # Category total and percentage of grand total
+    # Summary section
     pct_of_total = (net_debits / grand_total * 100) if grand_total else 0
-    summary = f"Total: ${net_debits:,.2f}   ({pct_of_total:.2f}% of Grand Total)\n"
-    summary_label = tk.Label(frame, text=summary, font=("Segoe UI", 13, "bold"), bg='white', fg='#1565c0')
-    summary_label.pack(anchor='w', pady=(0, 10))
+    summary = f"Total: ${net_debits:,.2f}   ({pct_of_total:.2f}% of Grand Total)"
+    summary_label = tk.Label(main_frame, text=summary, 
+                            font=("Segoe UI", 13, "bold"), bg='white', fg='#1565c0')
+    summary_label.grid(row=1, column=0, pady=(0, 10), sticky='n')
 
-    # Table header
-    table_header = f"{'Keyword':<22} {'Sum':>13} {'Count':>7} {'% of Cat.':>13} {'% of Total':>13}\n"
-    table_header += "-" * 75 + "\n"
+    # Table area with dynamic sizing
+    table_frame = tk.Frame(main_frame, bg='#f8fafc')
+    table_frame.grid(row=2, column=0, sticky='nsew', pady=10)
 
-    # Build the table rows
+    # Configure grid weights for table area
+    table_frame.grid_columnconfigure(0, weight=1)
+    table_frame.grid_rowconfigure(0, weight=1)
+
+    # Scrollable text area
+    text_area = scrolledtext.ScrolledText(table_frame, wrap=tk.WORD, 
+                                        font=("Consolas", 11), bg='#f8fafc',
+                                        fg='#222222', bd=1, relief='solid')
+    text_area.grid(row=0, column=0, sticky='nsew')
+
+    # Table header (same as before)
+    table_header = f"{'Keyword':>32}     {'Money Out':<15} {'Money In':<15} {'Count':^7} {'% of Cat.':>13} {'% of Total':>13}\n"
+    table_header += "-" * len(table_header) + "\n"
+
+    # Build table rows (same as before)
     table_rows = ""
-    for kw, stats in sorted(keywords.items(), key=lambda x: -x[1]['sum']):
-        kw_sum = stats['sum']
+    for kw, stats in sorted(keywords.items(), key=lambda x: -x[1]['sum_debits']):
+        kw_debit_sum = stats['sum_debits']
+        kw_credit_sum = stats['sum_credits']
         kw_count = stats['count']
-        pct_cat = (kw_sum / net_debits * 100) if net_debits else 0
-        pct_total = (kw_sum / grand_total * 100) if grand_total else 0
-        table_rows += f"{kw:<22} ${kw_sum:>12,.2f} {kw_count:>7} {pct_cat:>12.2f}% {pct_total:>12.2f}%\n"
+        pct_cat = (kw_debit_sum / net_debits * 100) if net_debits else 0
+        pct_total = (kw_debit_sum / grand_total * 100) if grand_total else 0
+        table_rows += f"{kw:>32}     ${kw_debit_sum:<15,.2f} ${kw_credit_sum:<15,.2f} {kw_count:^7} {pct_cat:>12.2f}% {pct_total:>12.2f}%\n"
 
-    # Scrollable, monospace table
-    text_area = scrolledtext.ScrolledText(frame, wrap=tk.WORD, font=("Consolas", 11), bg='#f8fafc', fg='#222222', bd=1, relief='solid', height=18)
-    text_area.pack(expand=True, fill='both')
+    # Insert text and configure
     text_area.insert(tk.END, table_header + table_rows)
     text_area.config(state='disabled')
 
-    close_btn = tk.Button(frame, text="Close", command=detail_win.destroy, font=("Segoe UI", 11, "bold"), bg='#1976d2', fg='white', bd=0, relief='flat', padx=12, pady=6, activebackground='#1565c0')
-    close_btn.pack(pady=12, anchor='e')
+    # Centered close button
+    close_btn = tk.Button(main_frame, text="Close", command=detail_win.destroy,
+                         font=("Segoe UI", 11, "bold"), bg='#1976d2', fg='white',
+                         bd=0, relief='flat', padx=12, pady=6)
+    close_btn.grid(row=3, column=0, pady=12, sticky='')
 
-    detail_win.resizable(False, False)
-
-def open_category_popup(category, sorted_purchases, sub_sums, sub_counts, grand_total):
-    # Prepare details_dict for the popup
-    net_debits = sum(p['debit'] for p in sorted_purchases[category])
-    keywords = {}
-    for kw in sub_counts[category]:
-        keywords[kw] = {
-            'sum': sub_sums[category][kw],
-            'count': sub_counts[category][kw]
-        }
-    details_dict = {'net_debits': net_debits, 'keywords': keywords}
-    show_category_details(category, details_dict, grand_total)
-
-
-def show_main_window(categories, sorted_purchases, most_used, sub_sums, sub_counts, summary_text,
-                     grand_total, returns, total_credit_pay, parsed_purchases):
+def show_main_window(categories, sorted_purchases, most_used, sub_debit_sums, sub_credit_sums, sub_counts, grand_total, returns, total_credit_pay, parsed_purchases, summary_text=''):
     root = tk.Tk()
     root.title("Spending Categories")
-    root.geometry('1500x900')
     root.configure(bg='#f4f6f8')
+    root.minsize(1500, 1100)
+    root.resizable(True, True)
 
-    # --- Create a main frame for the canvas and scrollbar ---
-    main_frame = tk.Frame(root, bg='#f4f6f8')
-    main_frame.pack(fill=tk.BOTH, expand=1)
+    # Main container frame styled like a card
+    main_frame = tk.Frame(root, bg='white', bd=2, relief='groove')
+    main_frame.pack(expand=True, fill='both', padx=25, pady=25)
 
-    # --- Create a canvas ---
-    canvas = tk.Canvas(main_frame, bg='#f4f6f8', highlightthickness=0)
-    canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
+    # Centering and resizing
+    main_frame.grid_columnconfigure(0, weight=1)
+    main_frame.grid_rowconfigure(3, weight=1)
 
-    # --- Add a vertical scrollbar to the canvas ---
-    scrollbar = ttk.Scrollbar(main_frame, orient=tk.VERTICAL, command=canvas.yview)
-    scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+    # Header
+    header = tk.Label(main_frame, text="Spending Categories",
+                      font=("Segoe UI", 18, "bold"), bg='white', fg='#1a237e')
+    header.grid(row=0, column=0, pady=(0, 12), sticky='n')
 
-    # --- Configure the canvas to use the scrollbar ---
-    canvas.configure(yscrollcommand=scrollbar.set)
-    canvas.bind('<Configure>', lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
-
-    # --- Create a frame inside the canvas ---
-    inner_frame = tk.Frame(canvas, bg='#f4f6f8')
-    canvas.create_window((0, 0), window=inner_frame, anchor="nw")
-
-    # --- Optional: Enable mousewheel scrolling ---
-    def _on_mousewheel(event):
-        canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
-    canvas.bind_all("<MouseWheel>", _on_mousewheel)
-
-    # --- Now add all your widgets to inner_frame instead of root/card ---
-    # Main card/frame for content
-    card = tk.Frame(inner_frame, bg='white', bd=2, relief='groove', padx=28, pady=28)
-    card.pack(expand=True, fill='both', padx=40, pady=40)
-
-    # Summary section (if present)
+    # Summary section
     if summary_text and str(summary_text).strip() != "0":
-        summary_label = tk.Label(card, text="Summary", font=("Segoe UI", 16, "bold"), bg='white', fg='#1a237e')
-        summary_label.pack(anchor='w', pady=(0, 8))
-        summary_area = tk.Text(card, height=8, wrap=tk.WORD, font=("Segoe UI", 12), bg='#f9f9f9', fg='#222', bd=1, relief='solid')
-        summary_area.pack(fill='x', padx=0)
+        summary_label = tk.Label(main_frame, text="Summary", font=("Segoe UI", 15, "bold"), bg='white', fg='#1a237e')
+        summary_label.grid(row=1, column=0, sticky='n', pady=(0, 8))
+        summary_area = tk.Text(main_frame, height=6, wrap=tk.WORD, font=("Segoe UI", 12), bg='#f9f9f9', fg='#222', bd=1, relief='solid')
+        summary_area.grid(row=2, column=0, sticky='ew')
         summary_area.insert(tk.END, summary_text)
         summary_area.config(state='disabled')
-        sep = tk.Label(card, text="Categories", font=("Segoe UI", 15, "bold"), bg='white', fg='#1976d2')
-        sep.pack(pady=(18, 8), anchor='w')
-    else:
-        sep = tk.Label(card, text="Categories", font=("Segoe UI", 15, "bold"), bg='white', fg='#1976d2')
-        sep.pack(pady=(0, 8), anchor='w')
 
-    # Table frame
-    table = tk.Frame(card, bg='white')
-    table.pack(fill='x', pady=10)
+    # Table area with scrollable frame (for buttons)
+    table_outer_frame = tk.Frame(main_frame, bg='#f8fafc')
+    table_outer_frame.grid(row=3, column=0, sticky='nsew', pady=12)
+    table_outer_frame.grid_columnconfigure(0, weight=1)
+    table_outer_frame.grid_rowconfigure(0, weight=1)
+
+    # Add canvas and scrollbar for scrolling
+    canvas = tk.Canvas(table_outer_frame, bg='#f8fafc', highlightthickness=0)
+    canvas.grid(row=0, column=0, sticky='nsew')
+    scrollbar = ttk.Scrollbar(table_outer_frame, orient=tk.VERTICAL, command=canvas.yview)
+    scrollbar.grid(row=0, column=1, sticky='ns')
+    canvas.configure(yscrollcommand=scrollbar.set)
+    table_frame = tk.Frame(canvas, bg='#f8fafc')
+    canvas.create_window((0, 0), window=table_frame, anchor='nw')
+
+    def on_configure(event):
+        canvas.configure(scrollregion=canvas.bbox('all'))
+    table_frame.bind('<Configure>', on_configure)
 
     # Table headers
     headers = [
         ("Category", 20),
-        ("Net Debits", 16),
-        ("Net Credits", 16),
-        # ("Most Common Keyword", 25),
-        # ("Sum for Most Common Keyword", 28),
-        ("", 2)
+        ("Net Debits", 15),
+        ("Net Credits", 15),
+        # ("Most Common Keyword", 26),
+        # ("Sum for Most Common", 20),
+        ("% of Total Debits", 17),
+        ("", 10)
     ]
     for col, (text, width) in enumerate(headers):
-        tk.Label(table, text=text, font=("Segoe UI", 12, "bold"), bg='white', fg='#374151',
-                 anchor='w', width=width).grid(row=0, column=col, sticky='w', padx=(0, 4), pady=(0, 4))
+        tk.Label(table_frame, text=text, font=("Segoe UI", 12, "bold"), bg='#f8fafc', fg='#374151',
+                 anchor='center', width=width).grid(row=0, column=col, sticky='nsew', padx=(0, 4), pady=(0, 4))
 
     # Table rows
     for i, cat in enumerate(categories, start=1):
         net_credits = sum(purchase.get('credit', 0) for purchase in sorted_purchases[cat])
         net_debits = sum(purchase.get('debit', 0) for purchase in sorted_purchases[cat])
-        print(f'net credits are ${net_credits} and net debits are ${net_credits}')
         most_common_keyword = most_used[cat][0] if most_used[cat][0] else "N/A"
-        most_common_sum = sub_sums[cat].get(most_common_keyword, 0.0)
+        most_common_debit_sum = sub_debit_sums[cat].get(most_common_keyword, 0.0)
         pct_of_total = (net_debits / grand_total * 100) if grand_total else 0
-        pct_of_cat = (most_common_sum / net_debits * 100) if net_debits else 0
-        pct_of_total_kw = (most_common_sum / grand_total * 100) if grand_total else 0
 
-        # Main row
-        tk.Label(table, text=cat, bg='white', anchor='w', font=("Segoe UI", 11), width=20).grid(row=2*i-1, column=0, sticky='w')
-        tk.Label(table, text=f"${net_credits:,.2f}", bg='white', anchor='w', font=("Segoe UI", 11), width=16).grid(row=2*i-1, column=1, sticky='w')
-        tk.Label(table, text=f"${net_debits:,.2f}", bg='white', anchor='w', font=("Segoe UI", 11), width=16).grid(row=2*i-1, column=2, sticky='w')
-        # tk.Label(table, text=most_common_keyword, bg='white', anchor='w', font=("Segoe UI", 11), width=25).grid(row=2*i-1, column=2, sticky='w')
-        # tk.Label(table, text=f"${most_common_sum:,.2f}", bg='white', anchor='w', font=("Segoe UI", 11), width=28).grid(row=2*i-1, column=3, sticky='w')
+        tk.Label(table_frame, text=cat, bg='#f8fafc', anchor='w', font=("Segoe UI", 11), width=20).grid(row=i, column=0, sticky='nsew')
+        tk.Label(table_frame, text=f"${net_debits:,.2f}", bg='#f8fafc', anchor='e', font=("Segoe UI", 11), width=15).grid(row=i, column=1, sticky='nsew')
+        tk.Label(table_frame, text=f"${net_credits:,.2f}", bg='#f8fafc', anchor='e', font=("Segoe UI", 11), width=15).grid(row=i, column=2, sticky='nsew')
+        # tk.Label(table_frame, text=most_common_keyword, bg='#f8fafc', anchor='center', font=("Segoe UI", 11), width=26).grid(row=i, column=3, sticky='nsew')
+        # tk.Label(table_frame, text=f"${most_common_debit_sum:,.2f}", bg='#f8fafc', anchor='e', font=("Segoe UI", 11), width=20).grid(row=i, column=4, sticky='nsew')
+        tk.Label(table_frame, text=f"{pct_of_total:^.2f}%", bg='#f8fafc', anchor='e', font=("Segoe UI", 11), width=12).grid(row=i, column=3, sticky='nsew')
 
-        # Styled Details button
-        btn = tk.Button(table, text="Details", width=10,
+        btn = tk.Button(table_frame, text="Details", width=10,
                         font=("Segoe UI", 10, "bold"), bg='#1976d2', fg='white', bd=0, relief='flat',
                         activebackground='#1565c0', activeforeground='white',
                         cursor='hand2')
-        btn.grid(row=2*i-1, column=4, padx=4, pady=2, sticky='w')
+        btn.grid(row=i, column=6, padx=4, pady=2, sticky='nsew')
         btn.config(command=lambda c=cat: show_category_details(
-            c, sorted_purchases, sub_sums, sub_counts, grand_total
-        ))
+                    c, sorted_purchases, sub_debit_sums, sub_credit_sums, sub_counts, grand_total
+                    ))
 
-        # Percentage row (smaller, gray font)
-        tk.Label(table, text="", bg='white', width=20).grid(row=2*i, column=0)
-        tk.Label(table, text=f"{pct_of_total:.2f}% of Total", font=("Segoe UI", 10), fg="#888", bg='white', anchor='w', width=16).grid(row=2*i, column=1, sticky='w')
-        tk.Label(table, text="", bg='white', width=25).grid(row=2*i, column=2)
-        # tk.Label(table,
-        #          text=f"{pct_of_cat:.2f}% of Cat., {pct_of_total_kw:.2f}% of Total",
-        #          font=("Segoe UI", 10), fg="#888", bg='white', anchor='w', width=28).grid(row=2*i, column=3, sticky='w')
-        # tk.Label(table, text="", bg='white', width=2).grid(row=2*i, column=4)
-
-    # --- Footer with grand totals and date range ---
+    # Footer with grand totals and date range
     if parsed_purchases:
         try:
             dates = [datetime.strptime(p['date'], "%Y-%m-%d") for p in parsed_purchases if 'date' in p]
             oldest_date = min(dates).strftime("%Y-%m-%d")
             newest_date = max(dates).strftime("%Y-%m-%d")
-        except Exception:
+        except ValueError:
             oldest_date = "N/A"
             newest_date = "N/A"
     else:
@@ -197,35 +186,169 @@ def show_main_window(categories, sorted_purchases, most_used, sub_sums, sub_coun
         f"Total Returns: ${total_credit_pay:,.2f}\n"
         f"Total Cashflow In: ${total_credit_pay:,.2f}\n"
         f"Total Cashflow Out: ${total_credit_pay:,.2f}\n"
-
     )
 
-    footer_label = tk.Label(card, text=footer_text, font=("Segoe UI", 12, "bold"),
+    footer_label = tk.Label(main_frame, text=footer_text, font=("Segoe UI", 12, "bold"),
                             bg='white', fg='#1a237e', anchor='w', justify='left')
-    footer_label.pack(side='top', fill='x', padx=0, pady=18)
+    footer_label.grid(row=4, column=0, pady=18, sticky='ew')
 
     root.mainloop()
 
+# def show_main_window(categories, sorted_purchases, most_used, sub_debit_sums, sub_credit_sums, sub_counts, grand_total, returns, total_credit_pay, parsed_purchases, summary_text=''):
+#     root = tk.Tk()
+#     root.title("Spending Categories")
+#     root.geometry('1500x900')
+#     root.configure(bg='#f4f6f8')
+
+#     # --- Create a main frame for the canvas and scrollbar ---
+#     main_frame = tk.Frame(root, bg='#f4f6f8')
+#     main_frame.pack(fill=tk.BOTH, expand=1)
+
+#     # --- Create a canvas ---
+#     canvas = tk.Canvas(main_frame, bg='#f4f6f8', highlightthickness=0)
+#     canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
+
+#     # --- Add a vertical scrollbar to the canvas ---
+#     scrollbar = ttk.Scrollbar(main_frame, orient=tk.VERTICAL, command=canvas.yview)
+#     scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+#     # --- Configure the canvas to use the scrollbar ---
+#     canvas.configure(yscrollcommand=scrollbar.set)
+#     canvas.bind('<Configure>', lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+
+#     # --- Create a frame inside the canvas ---
+#     inner_frame = tk.Frame(canvas, bg='#f4f6f8')
+#     canvas.create_window((0, 0), window=inner_frame, anchor="nw")
+
+#     # --- Optional: Enable mousewheel scrolling ---
+#     def _on_mousewheel(event):
+#         canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+#     canvas.bind_all("<MouseWheel>", _on_mousewheel)
+
+#     # --- Now add all your widgets to inner_frame instead of root/card ---
+#     # Main card/frame for content
+#     card = tk.Frame(inner_frame, bg='white', bd=2, relief='groove', padx=28, pady=28)
+#     card.pack(expand=True, fill='both', padx=40, pady=40)
+
+#     # Summary section (if present)
+#     if summary_text and str(summary_text).strip() != "0":
+#         summary_label = tk.Label(card, text="Summary", font=("Segoe UI", 16, "bold"), bg='white', fg='#1a237e')
+#         summary_label.pack(anchor='w', pady=(0, 8))
+#         summary_area = tk.Text(card, height=8, wrap=tk.WORD, font=("Segoe UI", 12), bg='#f9f9f9', fg='#222', bd=1, relief='solid')
+#         summary_area.pack(fill='x', padx=0)
+#         summary_area.insert(tk.END, summary_text)
+#         summary_area.config(state='disabled')
+#         sep = tk.Label(card, text="Categories", font=("Segoe UI", 15, "bold"), bg='white', fg='#1976d2')
+#         sep.pack(pady=(18, 8), anchor='w')
+#     else:
+#         sep = tk.Label(card, text="Categories", font=("Segoe UI", 15, "bold"), bg='white', fg='#1976d2')
+#         sep.pack(pady=(0, 8), anchor='w')
+
+#     # Table frame
+#     table = tk.Frame(card, bg='white')
+#     table.pack(fill='x', pady=10)
+
+#     # Table headers
+#     headers = [
+#         ("Category", 20),
+#         ("Net Debits ($s IN)", 18),
+#         ("Net Credits ($s OUT)", 18),
+#         # ("Most Common Keyword", 25),
+#         # ("Sum for Most Common Keyword", 28),
+#         ("", 2)
+#     ]
+#     for col, (text, width) in enumerate(headers):
+#         tk.Label(table, text=text, font=("Segoe UI", 12, "bold"), bg='white', fg='#374151',
+#                  anchor='w', width=width).grid(row=0, column=col, sticky='w', padx=(0, 4), pady=(0, 4))
+
+#     # Table rows
+#     for i, cat in enumerate(categories, start=1):
+#         net_credits = sum(purchase.get('credit', 0) for purchase in sorted_purchases[cat])
+#         net_debits = sum(purchase.get('debit', 0) for purchase in sorted_purchases[cat])
+#         print(f'net credits are ${net_credits} and net debits are ${net_credits}')
+#         most_common_keyword = most_used[cat][0] if most_used[cat][0] else "N/A"
+#         most_common_debit_sum = sub_debit_sums[cat].get(most_common_keyword, 0.0)
+#         pct_of_total = (net_debits / grand_total * 100) if grand_total else 0
+#         pct_of_cat = (most_common_debit_sum / net_debits * 100) if net_debits else 0
+#         pct_of_total_kw = (most_common_debit_sum / grand_total * 100) if grand_total else 0
+
+#         # Main row
+#         tk.Label(table, text=cat, bg='white', anchor='w', font=("Segoe UI", 11), width=20).grid(row=2*i-1, column=0, sticky='w')
+#         tk.Label(table, text=f"${net_credits:,.2f}", bg='white', anchor='w', font=("Segoe UI", 11), width=16).grid(row=2*i-1, column=1, sticky='w')
+#         tk.Label(table, text=f"${net_debits:,.2f}", bg='white', anchor='w', font=("Segoe UI", 11), width=16).grid(row=2*i-1, column=2, sticky='w')
+#         # tk.Label(table, text=most_common_keyword, bg='white', anchor='w', font=("Segoe UI", 11), width=25).grid(row=2*i-1, column=2, sticky='w')
+#         # tk.Label(table, text=f"${most_common_debit_sum:,.2f}", bg='white', anchor='w', font=("Segoe UI", 11), width=28).grid(row=2*i-1, column=3, sticky='w')
+
+#         # Styled Details button
+#         btn = tk.Button(table, text="Details", width=10,
+#                         font=("Segoe UI", 10, "bold"), bg='#1976d2', fg='white', bd=0, relief='flat',
+#                         activebackground='#1565c0', activeforeground='white',
+#                         cursor='hand2')
+#         btn.grid(row=2*i-1, column=4, padx=4, pady=2, sticky='w')
+#         btn.config(command=lambda c=cat: show_category_details(
+#                     c, sorted_purchases, sub_debit_sums,sub_credit_sums, sub_counts, grand_total
+#                     ))
+
+#         # Percentage row (smaller, gray font)
+#         tk.Label(table, text="", bg='white', width=20).grid(row=2*i, column=0)
+#         tk.Label(table, text=f"{pct_of_total:.2f}% of Total", font=("Segoe UI", 10), fg="#888", bg='white', anchor='w', width=16).grid(row=2*i, column=1, sticky='w')
+#         tk.Label(table, text="", bg='white', width=25).grid(row=2*i, column=2)
+#         # tk.Label(table,
+#         #          text=f"{pct_of_cat:.2f}% of Cat., {pct_of_total_kw:.2f}% of Total",
+#         #          font=("Segoe UI", 10), fg="#888", bg='white', anchor='w', width=28).grid(row=2*i, column=3, sticky='w')
+#         # tk.Label(table, text="", bg='white', width=2).grid(row=2*i, column=4)
+
+#     # --- Footer with grand totals and date range ---
+#     if parsed_purchases:
+#         try:
+#             dates = [datetime.strptime(p['date'], "%Y-%m-%d") for p in parsed_purchases if 'date' in p]
+#             oldest_date = min(dates).strftime("%Y-%m-%d")
+#             newest_date = max(dates).strftime("%Y-%m-%d")
+#         except ValueError:
+#             oldest_date = "N/A"
+#             newest_date = "N/A"
+#     else:
+#         oldest_date = "N/A"
+#         newest_date = "N/A"
+
+#     footer_text = (
+#         f"Start Date: {oldest_date}    End Date: {newest_date}\n\n"
+#         f"Total Purchases Payments: ${grand_total:,.2f}\n"
+#         f"Total Credit Card Payments: ${returns:,.2f}\n"
+#         f"Total Returns: ${total_credit_pay:,.2f}\n"
+#         f"Total Cashflow In: ${total_credit_pay:,.2f}\n"
+#         f"Total Cashflow Out: ${total_credit_pay:,.2f}\n"
+
+#     )
+
+#     footer_label = tk.Label(card, text=footer_text, font=("Segoe UI", 12, "bold"),
+#                             bg='white', fg='#1a237e', anchor='w', justify='left')
+#     footer_label.pack(side='top', fill='x', padx=0, pady=18)
+
+#     root.mainloop()
+
+
+
 # --- Build the summary string with per-category totals ---
 
-def build_summary_string(categories, sorted_purchases, parsed_purchases, grand_total, returns, total_credit_pay):
-    summary_lines = []
-    summary_lines.append(f"{len(sorted_purchases['uncategorized'])} out of {len(parsed_purchases)} Uncategorized purchases\n")
-    summary_lines.append(f"{'Category':>25} - {'Total Spent':<12} {'Credit':<12}")
+# def build_summary_string(categories, sorted_purchases, parsed_purchases, grand_total, returns, total_credit_pay):
+#     summary_lines = []
+#     summary_lines.append(f"{len(sorted_purchases['uncategorized'])} out of {len(parsed_purchases)} Uncategorized purchases\n")
+#     summary_lines.append(f"{'Category':>25} - {'Total Spent':<12} {'Credit':<12}")
 
-    # Per-category totals
-    for category in categories:
-        total_spent = 0
-        credit_payment = 0
-        for purchase in sorted_purchases[category]:
-            if purchase.get('credit', 0):
-                credit_payment += purchase['credit']
-            else:
-                total_spent += purchase['debit']
-        summary_lines.append(f"{category:>25} - ${total_spent:<10.2f} ${credit_payment:<10.2f}")
+#     # Per-category totals
+#     for category in categories:
+#         total_spent = 0
+#         credit_payment = 0
+#         for purchase in sorted_purchases[category]:
+#             if purchase.get('credit', 0):
+#                 credit_payment += purchase['credit']
+#             else:
+#                 total_spent += purchase['debit']
+#         summary_lines.append(f"{category:>25} - ${total_spent:<10.2f} ${credit_payment:<10.2f}")
 
-    summary_lines.append(f"\n==> Grand Total Spent: ${grand_total:<10.2f} Total Returns: ${returns:<10.2f} Total Credit Payment: ${total_credit_pay:<10.2f}\n")
-    return "\n".join(summary_lines)
+#     summary_lines.append(f"\n==> Grand Total Spent: ${grand_total:<10.2f} Total Returns: ${returns:<10.2f} Total Credit Payment: ${total_credit_pay:<10.2f}\n")
+#     return "\n".join(summary_lines)
 
 def parse_multiple_csv(files_with_types):
     """
@@ -441,25 +564,26 @@ def analyze_category_keywords(sorted_purchases, categories):
     # Ensure all keywords in categories are uppercase (for matching)
     categories = {cat: [kw.upper() for kw in kws] for cat, kws in categories.items()}
     most_used_keywords = {}
-    sub_category_sums = {}
+    sub_category_debit_sums ,sub_category_credit_sums = {}, {}
     sub_category_counts = {}
 
     for category, purchases in sorted_purchases.items():
         keyword_counts = {kw: 0 for kw in categories.get(category, [])}
-        keyword_sums = {kw: 0 for kw in categories.get(category, [])}
+        keyword_debit_sums  = {kw: 0 for kw in categories.get(category, [])}
+        keyword_credit_sums  = {kw: 0 for kw in categories.get(category, [])}
 
         for purchase in purchases:
             desc = purchase['description'].upper()
             for keyword in categories.get(category, []):
                 if keyword in desc:
                     keyword_counts[keyword] += 1
-
-                    keyword_sums[keyword] += float(purchase.get('debit', 0)) + float(purchase.get('credit', 0))
+                    keyword_debit_sums[keyword] += float(purchase.get('debit', 0)) 
+                    keyword_credit_sums[keyword] += float(purchase.get('credit', 0))
 
         # Remove keywords that were never matched (count is zero)
         filtered_counts = {kw: cnt for kw, cnt in keyword_counts.items() if cnt > 0}
-        filtered_sums = {kw: keyword_sums[kw] for kw in filtered_counts}
-
+        filtered_debit_sums = {kw: keyword_debit_sums[kw] for kw in filtered_counts}
+        filtered_credit_sums = {kw: keyword_credit_sums[kw] for kw in filtered_counts}
         if filtered_counts:
             # Find the keyword with the highest count
             most_common = max(filtered_counts.items(), key=lambda x: x[1])
@@ -467,8 +591,10 @@ def analyze_category_keywords(sorted_purchases, categories):
         else:
             most_used_keywords[category] = (None, 0)  # No keyword found
 
-        sub_category_sums[category] = filtered_sums
+        sub_category_debit_sums[category] = filtered_debit_sums        
+        sub_category_credit_sums[category] = filtered_credit_sums
+
         sub_category_counts[category] = filtered_counts
 
-    return most_used_keywords, sub_category_sums, sub_category_counts
+    return most_used_keywords, sub_category_debit_sums,sub_category_credit_sums, sub_category_counts
 
