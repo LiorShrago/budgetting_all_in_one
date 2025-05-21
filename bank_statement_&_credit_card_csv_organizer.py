@@ -1,8 +1,3 @@
-# import csv
-# import numpy as np
-# from datetime import datetime
-# import tkinter as tk
-# from tkinter import scrolledtext,simpledialog, messagebox, ttk
 import my_functions
 import platform
 
@@ -10,37 +5,37 @@ rows,row, columns,col = [],[],[],[]
 parsed_purchases, sorted_purchases = [], []
 i,c,j=0,0,0
 result_string = ""
-categories= {'grocery':            ['COSTCO','DOLLAR','NOFRILLS','FARM BOY','FOOD BASICS', 'WAL-MART', 'SUPERSTORE', 'LONGOS','LOBLAWS','METRO','FRESHCO','FOODLAND','GROCERY','GOODMAN','T&T',
+categories= {'GROCERY':            ['COSTCO','DOLLAR','NOFRILLS','FARM BOY','FOOD BASICS', 'WAL-MART', 'SUPERSTORE', 'LONGOS','LOBLAWS','METRO','FRESHCO','FOODLAND','GROCERY','GOODMAN','T&T',
                                     'RANCHFRESH','VINCE'] 
-            ,'restaurant':         ['CHATIME','POKE BOX' ,'NOODLE LEGEND', 'POS MERCHANDISE','SOUPS', 'ONROUTE','MABU' , 'CARIBB', 'AMD THORNHILL', 'MOXIES','MEVAME', 'WHAT A BAGEL','DELIVERO',
+            ,'RESTAURANT':         ['CHATIME','POKE BOX' ,'NOODLE LEGEND', 'POS MERCHANDISE','SOUPS', 'ONROUTE','MABU' , 'CARIBB', 'AMD THORNHILL', 'MOXIES','MEVAME', 'WHAT A BAGEL','DELIVERO',
                                     'PATTIES', 'MARIACHI','BREWING', 'A&W', 'SEAFOOD','COBS','SALT','LOBSTER','ISAAN DER' , 'GOLS','SHAWARMA', 'KIMPTON','HUNGRY' , 'TIM HORTON','MCDONALD',
                                     'TACO','KFC','GELATO','EATS','PIZZA','BURGER','WINGS','RESTAURANT','CAFE','COFFEE','DINNER','LUNCH','BREAKFAST','BAGEL','SANDWICH','SUSHI','TACOS',
                                     'BUBBLE TEA','BOBA','TEA','FOOD TRUCK','FOOD COURT','FOOD HALL','FAST FOOD', 'GYUBEE', 'JAPANE', 'DUMPLING','KING SLICE','COCOA40','SUNSHINE VILLAGE GRILL',
                                     'SHENGJIAN KING',"SHELBY'S",'KIBO' ,'CHICKEN','BAR AND GRIL','EARLS'] 
-            ,'gas':                ['SHELL','PETRO CANADA','ESSO','ULTRAMAR','PIONEER','GAS','FUEL','PETRO']
-            ,'shopping':           ['FADES','BBYMARKETPLACE', 'STOKES','MACS', 'STORE ', 'VARIET','NUT SHOPP', 'SEPHORA','SHOPPER','AMZN','VALUE VILLAGE','TEMU','INDIGO','THRIFT','MARKET BRIGHTON',
+            ,'GAS':                ['SHELL','PETRO CANADA','ESSO','ULTRAMAR','PIONEER','GAS','FUEL','PETRO']
+            ,'SHOPPING':           ['FADES','BBYMARKETPLACE', 'STOKES','MACS', 'STORE ', 'VARIET','NUT SHOPP', 'SEPHORA','SHOPPER','AMZN','VALUE VILLAGE','TEMU','INDIGO','THRIFT','MARKET BRIGHTON',
                                     'CHAPTERS' ,'EBAY','STINSON & SON','WALMART','BEST BUY','MARSHALLS','HOME DEPOT','LOWES','CANADIAN TIRE', 'STAPLES','TREASURE HUNT','PARTY CITY','ALIEXPRESS',
                                     'BARBERSHOP',]
-            ,'entertainment':      ['BILLIARDS','NEWROADS PERFORMING','AXE THROWING', 'FISH AND WILDLI', 'BAIT', 'PPARK', 'CLUB' , 'USD','CINEPLEX','MOVIE THEATRE','THEATRE','DAVE', 'ELECTRIC',
+            ,'ENTERTAINMENT':      ['BILLIARDS','NEWROADS PERFORMING','AXE THROWING', 'FISH AND WILDLI', 'BAIT', 'PPARK', 'CLUB' , 'USD','CINEPLEX','MOVIE THEATRE','THEATRE','DAVE', 'ELECTRIC',
                                     'FAMOUS PLAYER','MIRVISH']
-            ,'travel':             ['MIAMI','AIRCANADA','RCL','COZUMEL','AIR CANADA', 'FLIGHT CENTRE','EXPEDIA','HALIFAX','PEGGYS COVE']
-            ,'health':             ['PHARM','DRUG STORE','LA FITNESS','DR','MASSAGE','DENTIST','OPTOMETRIST','OPTICIAN','CLINIC','CVC','MEDICAL','HOSPITAL','HEALTH','WELLNESS',
+            ,'TRAVEL':             ['MIAMI','AIRCANADA','RCL','COZUMEL','AIR CANADA', 'FLIGHT CENTRE','EXPEDIA','HALIFAX','PEGGYS COVE']
+            ,'HEALTH':             ['PHARM','DRUG STORE','LA FITNESS','DR','MASSAGE','DENTIST','OPTOMETRIST','OPTICIAN','CLINIC','CVC','MEDICAL','HOSPITAL','HEALTH','WELLNESS',
                                     'MEMBERSHIP FEE INSTALLMENT','WATER DEPOT','MIND PEOPLE']
-            ,'utilities':          ['BELL ','ROGERS','HYDRO ONE','TELMAX']
-            ,'weed and alcohol':   ['LCBO','BEER STORE','WINE','LIQUOR','WOODS','NSLC','CANNAB','FIKA']
-            ,'transportation':     ['TTC','TRANSIT' ,'VIA RAIL','TAXI','UBER','LYFT', 'PRESTO', 'PARKING', 'GREENP']
+            ,'UTILITIES':          ['BELL ','ROGERS','HYDRO ONE','TELMAX']
+            ,'ALCOHOL':   ['LCBO','BEER STORE','WINE','LIQUOR','WOODS','NSLC','CANNAB','FIKA']
+            ,'TRANSPORTATION':     ['TTC','TRANSIT' ,'VIA RAIL','TAXI','UBER','LYFT', 'PRESTO', 'PARKING', 'GREENP']
             ,'CREDIT CARD PAYMENT':['PAYMENT THANK YOU','PAYMENT RECEIVED','CREDIT ADJUSTMENT', 'BILL PAYMENT VISA', 'BILL PAYMENT MASTERCARD','PAYMENTS American Express','Payment to  CIBC MASTERCARD']
             ,'GOVERNMENT':         ['EFT CREDIT','Town of Newma','NEWMARKET TAX', "CARBON REBATE"]
             ,'HELEN':              ['PETSMART','PETVALU','PET SERVICES']
             ,'GAMBLING':           ['BET365','FANDUEL', 'BETMGM','OLG']
             ,'DON HOWARDS':        ['DON HOWARD']
-            ,'mortgage':           ['MORTGAGE']
-            ,'e-transfer':         ['INTERAC E-TRANSFER SEND LISA AMENT','INTERAC E-TRANSFER RECEIVE','INTERAC E-TRANSFER SEND' ]
-            ,'stocks':             ['QUESTRADE']
-            ,'salary':             ['AYROLL DEPOSIT AMD','Direct deposit from AMD']
-            ,'charity':            ['PLAN CANADA']
+            ,'MORTGAGE':           ['MORTGAGE']
+            ,'E-TRANSFER':         ['INTERAC E-TRANSFER SEND LISA AMENT','INTERAC E-TRANSFER RECEIVE','INTERAC E-TRANSFER SEND' ]
+            ,'STOCKS':             ['QUESTRADE']
+            ,'SALARY':             ['AYROLL DEPOSIT AMD','Direct deposit from AMD']
+            ,'CHARITY':            ['PLAN CANADA']
             ,'TRANSFERS IN/OUT':   ['TRANSFER IN', 'TRANSFER OUT', 'CHEQUE IMAGE DEPOSIT', 'INTEREST','ABM DEPOSIT','Card Load','Transfer from  Simplii','Referral Bonus','Account Credited']
-            ,'uncategorized':      []
+            ,'UNCATEGORIZED':      []
             }
 
 os_name = platform.system()
@@ -83,8 +78,8 @@ parsed_purchases = my_functions.parse_multiple_csv(files_with_types)
 
 # Categorize the purchases
 sorted_purchases = my_functions.categorize_purchases(parsed_purchases, categories)
-print("\n",len(sorted_purchases['uncategorized']), "Out of", len(parsed_purchases), "Uncatageroized purchases", "\n")
-print(f"uncategorized purchases are: \n {sorted_purchases['uncategorized']}")
+print("\n",len(sorted_purchases['UNCATEGORIZED']), "Out of", len(parsed_purchases), "Uncatageroized purchases", "\n")
+print(f"uncategorized purchases are: \n {sorted_purchases['UNCATEGORIZED']}")
 #let user choose and create own categories
 # final_purchases, final_categories = my_functions.review_uncategorized_purchases(
 #     sorted_purchases, parsed_purchases, categories
@@ -111,23 +106,6 @@ print(f"\n==> Grand Total Spent: ${grand_total:<10.2f} Total Returns: ${returns:
 result_string += "\n==> Grand Total Spent: ${:<10.2f}".format(grand_total) + "Total Returns: ${:^20.2f}".format(returns) + " Total CREDIT CARD PAYMENT: ${:^20.2f}".format(total_credit_pay) + "\n"
 
 most_used, sub_debit_sums, sub_credit_sums, sub_counts = my_functions.analyze_category_keywords(sorted_purchases, categories)
-# for cat in categories:
-#     print(f"\nCategory: {cat}")
-#     print(f"  Most-used keyword: {most_used[cat][0]} ({most_used[cat][1]} times)")
-#     print("  Keyword breakdown:")
-#     for kw in sub_counts[cat]:
-#         print(f"    {kw:<15} - Count: {sub_counts[cat][kw]:<3}  Sum: ${sub_sums[cat][kw]:.2f}")
-
-
-# Build your summary string as you would print it
-# summary_text = ""
-#summary_text += f"{len(sorted_purchases['uncategorized'])} out of {len(parsed_purchases)} Uncatageroized purchases\n"
-#summary_text += f"\n==> Grand Total Spent: ${grand_total:<10.2f} Total Returns: ${returns:^20.2f} Total CREDIT CARD PAYMENT: ${total_credit_pay:^20.2f}\n"
-
-# Now call the main window function
-
-# summary_text = my_functions.build_summary_string(categories, sorted_purchases, parsed_purchases, grand_total, returns, total_credit_pay)
-# summary_text = "" 
 
 my_functions.show_main_window(
     categories,

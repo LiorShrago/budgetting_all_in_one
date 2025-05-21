@@ -1,20 +1,43 @@
 import csv
 import numpy as np
+from pprint import pprint
 from datetime import datetime
 import tkinter as tk
 from tkinter import scrolledtext,simpledialog, messagebox, ttk
 import sys
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QLabel, QTableWidget,
-    QTableWidgetItem, QPushButton, QHeaderView, QDialog, QHBoxLayout
+    QTableWidgetItem, QPushButton, QHeaderView, QDialog, QHBoxLayout, QAbstractItemView
 )
 from PyQt5.QtCore import Qt
+
+# def lists_from_dict (list_dictionnary_purchases):
+
+def extract_fields_from_purchases(purchases_by_category):
+    # Flatten all purchase dictionaries into a single list
+    all_purchases = []
+    for purchase_list in purchases_by_category.values():
+        all_purchases.extend(purchase_list)
+    
+    # Find all unique keys across all purchases
+    all_keys = set()
+    for purchase in all_purchases:
+        all_keys.update(purchase.keys())
+    
+    # Build a dictionary: key -> list of values for that key
+    result = {key: [] for key in all_keys}
+    for purchase in all_purchases:
+        for key in all_keys:
+            # Use None if the key is missing in a particular purchase
+            result[key].append(purchase.get(key))
+    
+    return result
 
 class CategoryDetailsDialog(QDialog):
     def __init__(self, category, sorted_purchases, sub_debit_sums, sub_credit_sums, sub_counts, grand_total, parent=None):
         super().__init__(parent)
         self.setWindowTitle(f"Details for {category}")
-        self.setMinimumSize(700, 400)
+        self.setMinimumSize(800, 400)
         layout = QVBoxLayout()
         self.setLayout(layout)
 
@@ -26,9 +49,9 @@ class CategoryDetailsDialog(QDialog):
 
         # Table
         keywords = sub_counts[category]
-        table = QTableWidget(len(keywords), 6)
+        table = QTableWidget(len(keywords), 7)
         table.setHorizontalHeaderLabels([
-            "Keyword", "Money Out", "Money In", "Count", "% of Cat.", "% of Total"
+            "Keyword", "Money Out", "Money In", "Count", "% of Cat.", "% of Total", "Details"
         ])
         table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
 
@@ -36,15 +59,57 @@ class CategoryDetailsDialog(QDialog):
             kw_debit_sum = sub_debit_sums[category][kw]
             kw_credit_sum = sub_credit_sums[category][kw]
             kw_count = sub_counts[category][kw]
-            pct_cat = (kw_debit_sum / net_debits * 100) if net_debits else 0
-            pct_total = (kw_debit_sum / grand_total * 100) if grand_total else 0
-
-            table.setItem(row, 0, QTableWidgetItem(str(kw)))
+            if str(kw).upper() != 'MORTGAGE' and str(kw).upper() != 'TRANSFERS IN/OUT':
+                pct_cat = (kw_debit_sum / net_debits * 100) if net_debits else 0
+                pct_total = (kw_debit_sum / grand_total * 100) if grand_total else 0
+            table.setItem(row, 0, QTableWidgetItem(kw))
             table.setItem(row, 1, QTableWidgetItem(f"${kw_debit_sum:,.2f}"))
             table.setItem(row, 2, QTableWidgetItem(f"${kw_credit_sum:,.2f}"))
             table.setItem(row, 3, QTableWidgetItem(str(kw_count)))
             table.setItem(row, 4, QTableWidgetItem(f"{pct_cat:.2f}%"))
             table.setItem(row, 5, QTableWidgetItem(f"{pct_total:.2f}%"))
+
+            # Details Button
+            btn = QPushButton("Show")
+            btn.clicked.connect(lambda _, k=kw: self.show_keyword_transactions(category, k, sorted_purchases[category]))
+            table.setCellWidget(row, 6, btn)
+
+        layout.addWidget(table)
+
+        # Close Button
+        close_btn = QPushButton("Close")
+        close_btn.clicked.connect(self.accept)
+        btn_layout = QHBoxLayout()
+        btn_layout.addStretch()
+        btn_layout.addWidget(close_btn)
+        layout.addLayout(btn_layout)
+
+    def show_keyword_transactions(self, category, keyword, transactions):
+        # Filter transactions for this keyword (sub-category)
+        keyword_transactions = [p for p in transactions if keyword in p['description']]
+        dialog = KeywordTransactionsDialog(category, keyword, keyword_transactions, self)
+        dialog.exec_()
+
+class KeywordTransactionsDialog(QDialog):
+    def __init__(self, category, keyword, transactions, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle(f"{category} - {keyword} Transactions")
+        self.setMinimumSize(900, 400)
+        layout = QVBoxLayout()
+        self.setLayout(layout)
+
+        headers = ["Date", "Description", "Debit", "Credit", "Type"]
+        table = QTableWidget(len(transactions), len(headers))
+        table.setHorizontalHeaderLabels(headers)
+        table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        table.setEditTriggers(QAbstractItemView.NoEditTriggers)
+
+        for row, purchase in enumerate(transactions):
+            table.setItem(row, 0, QTableWidgetItem(str(purchase.get('date', ''))))
+            table.setItem(row, 1, QTableWidgetItem(str(purchase.get('description', ''))))
+            table.setItem(row, 2, QTableWidgetItem(str(purchase.get('debit', ''))))
+            table.setItem(row, 3, QTableWidgetItem(str(purchase.get('credit', ''))))
+            table.setItem(row, 4, QTableWidgetItem(str(purchase.get('type', ''))))
 
         layout.addWidget(table)
 
@@ -71,19 +136,10 @@ class MainWindow(QMainWindow):
         header.setStyleSheet("font-size: 22pt; color: #1a237e; margin-bottom: 12px;")
         layout.addWidget(header)
 
-        # Summary
-        if summary_text and str(summary_text).strip() != "0":
-            summary_label = QLabel("<b>Summary</b>")
-            summary_label.setStyleSheet("font-size: 15pt; color: #1a237e;")
-            layout.addWidget(summary_label)
-            summary_area = QLabel(summary_text)
-            summary_area.setStyleSheet("background: #f9f9f9; font-size: 12pt; color: #222; padding: 8px;")
-            layout.addWidget(summary_area)
-
         # Table
         table = QTableWidget(len(categories), 5)
         headers = [
-            "Category", "Net Debits", "Net Credits", "% of Total Debits", "Details"
+            "Category", "Total Debits (Money Out/Spent)", "Total Credits (Money In/Received)", "% of Total Debits", "Details"
         ]
         table.setHorizontalHeaderLabels(headers)
         table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
@@ -96,8 +152,8 @@ class MainWindow(QMainWindow):
             table.setItem(row, 0, QTableWidgetItem(str(cat)))
             table.setItem(row, 1, QTableWidgetItem(f"${net_debits:,.2f}"))
             table.setItem(row, 2, QTableWidgetItem(f"${net_credits:,.2f}"))
-            table.setItem(row, 3, QTableWidgetItem(f"{pct_of_total:.2f}%"))
-
+            if str(sorted_purchases.get('keyword', '')).upper() != 'MORTGAGE' and str(sorted_purchases.get('keyword', '')).upper() != 'TRANSFERS IN/OUT':
+                table.setItem(row, 3, QTableWidgetItem(f"{pct_of_total:.2f}%"))
             btn = QPushButton("Details")
             btn.setStyleSheet("background: #1976d2; color: white; font-weight: bold;")
             btn.clicked.connect(
@@ -122,17 +178,19 @@ class MainWindow(QMainWindow):
             except ValueError:
                 oldest_date = "N/A"
                 newest_date = "N/A"
-        else:
+        else: 
             oldest_date = "N/A"
             newest_date = "N/A"
 
         footer_text = (
             f"Start Date: {oldest_date}    End Date: {newest_date}\n\n"
-            f"Total Purchases Payments: ${grand_total:,.2f}\n"
-            f"Total Credit Card Payments: ${returns:,.2f}\n"
-            f"Total Returns: ${total_credit_pay:,.2f}\n"
-            f"Total Cashflow In: ${total_credit_pay:,.2f}\n"
-            f"Total Cashflow Out: ${total_credit_pay:,.2f}\n"
+            f"Total Money Spent - Credit Card Purchases: ${grand_total:,.2f}\n"
+            f"Total Money Paid to Credit Cards: ${returns:,.2f}\n"
+            f"Total Returns to Credit Cards: ${total_credit_pay:,.2f}\n"
+            f"Total Cashflow In from bank accounts: ${total_credit_pay:,.2f}\n"
+            f"Total Cashflow Out from bank accounts: ${total_credit_pay:,.2f}\n"
+            f": ${total_credit_pay:,.2f}\n"
+
         )
         footer_label = QLabel(footer_text)
         footer_label.setStyleSheet("font-size: 12pt; color: #1a237e; font-weight: bold; margin-top: 18px;")
@@ -276,7 +334,7 @@ def categorize_purchases(purchases, categories):
 
         # If no category matches, add to 'uncategorized'
         if not categorized:
-            categorized_purchases['uncategorized'].append(purchase)
+            categorized_purchases['UNCATEGORIZED'].append(purchase)
 
     return categorized_purchases
 
